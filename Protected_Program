@@ -1,0 +1,85 @@
+#!/usr/bin/python 
+# -*- coding: utf-8 -*-
+
+import sqlite3
+import sys
+
+from sqlite3 import OperationalError
+
+con = None
+
+try:
+    con = sqlite3.connect('fake_umbc.db')
+    cur = con.cursor()
+
+    # Open and read the file as a single buffer
+    file_descriptor = open('fake_umbc.sql', 'r')
+    sql_file = file_descriptor.read()
+    file_descriptor.close()
+  
+    # Execute the commands in the file to create the database
+    sql_commands = sql_file.split(';')
+
+    print "there are " + str(len(sql_commands)) + " commands"
+
+    for command in sql_commands:
+        try:
+            print "executing: " + command
+            cur.execute(command)
+        except OperationalError, msg:
+            print "Command skipped: ", msg
+
+    print "Done!"
+
+# User input
+    class Input:
+        def __init__(data):
+            data.id = raw_input("Enter ID (enter stop to exit): ")
+            data.first_name = raw_input("Enter First Name: ")
+            data.last_name = raw_input("Enter Last Name: ")
+            data.email = "input"
+            data.gender = "input"
+            data.ip_address = "input"
+            data.race = "input"
+            data.university = "input"
+            data.ssn = "input"
+            data.state = "input"
+            data.phone = "input"
+            data.car_make = "input"
+            data.car_model = "input"
+            data.car_model_year = "input"
+            
+# Insert values into db with Input class                        
+    with con:      
+        running = True
+        while running:
+            i = Input()
+            cur = con.cursor()
+            cur.execute("SELECT id, first_name, last_name FROM fake_umbc")
+            cur.execute("INSERT INTO fake_umbc VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (i.id, i.first_name, i.last_name, i.email, i.gender, i.ip_address, i.race, i.university, i.ssn, i.state, i.phone, i.car_make, i.car_model, i.car_model_year))
+            running = False
+
+    # Execute an SQL query and get all the results
+    result = cur.execute("SELECT first_name, last_name FROM fake_umbc;")
+    rows = result.fetchall()
+
+    # Print header information from the result description
+    for desc in result.description:
+        print desc[0].ljust(20, ' '),
+
+    # Print actual data demonstrating that we've added it to the database
+    print ""
+    for row in rows:
+        for value in row:
+            print str(value).ljust(20, ' '),
+        print ""
+
+    cur.close()
+    con.close()
+
+except sqlite3.Error, e:
+    print "Error %s:" % e.args[0]
+    sys.exit(1)
+finally:
+    if con:
+        con.close()
